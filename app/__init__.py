@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 db = SQLAlchemy()
 
@@ -10,15 +11,19 @@ def create_app():
     # Inicializar extensiones
     db.init_app(app)
 
-    # Ruta para la raíz
-    @app.route('/')
-    def home():
-        return "Bienvenido a la API de EmprendeMas. Visita /detalles o /productos.", 200
+    # Configurar CORS con reglas específicas
+    CORS(app, resources={
+        r"/api/*": {  # Aplica CORS solo a rutas que comienzan con /api/
+            "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],  # Permitir estos orígenes
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Métodos permitidos
+            "allow_headers": ["Content-Type", "Authorization"],  # Encabezados permitidos
+        }
+    })
 
     # Registrar blueprints
     from app.routes.detalles import bp as detalles_bp
     from app.routes.productos import bp as productos_bp
-    app.register_blueprint(detalles_bp)
-    app.register_blueprint(productos_bp)
+    app.register_blueprint(detalles_bp, url_prefix="/api/detalles")  # Ajustar URL base del blueprint
+    app.register_blueprint(productos_bp, url_prefix="/api/productos")  # Ajustar URL base del blueprint
 
     return app
