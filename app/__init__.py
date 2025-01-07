@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
+
 db = SQLAlchemy()
 
 def create_app():
@@ -23,7 +24,9 @@ def create_app():
     # Registrar blueprints
     from app.routes.detalles import bp as detalles_bp
     from app.routes.productos import bp as productos_bp
+    from app.routes.servicios import servicios_bp
     app.register_blueprint(detalles_bp, url_prefix="/api/detalles")  # Ajustar URL base del blueprint
     app.register_blueprint(productos_bp, url_prefix="/api/productos")  # Ajustar URL base del blueprint
+    app.register_blueprint(servicios_bp, url_prefix="/api/servicios")  # Ajustar URL base del blueprint
 
     return app
