@@ -28,5 +28,7 @@ def create_app():
     app.register_blueprint(detalles_bp, url_prefix="/api/detalles")  # Ajustar URL base del blueprint
     app.register_blueprint(productos_bp, url_prefix="/api/productos")  # Ajustar URL base del blueprint
     app.register_blueprint(servicios_bp, url_prefix="/api/servicios")  # Ajustar URL base del blueprint
+    from app.routes import info_empresa
+    app.register_blueprint(info_empresa.bp, url_prefix="/api/info_empresa")  # Ajustar URL base del blueprint
 
     return app
