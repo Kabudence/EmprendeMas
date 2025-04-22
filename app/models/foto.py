@@ -7,12 +7,16 @@ from app import db
 class Foto(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     description = db.Column(db.String(250), nullable=False)
-    visitas = db.Column(db.Integer, nullable=False)
+    visitas = db.Column(db.Integer, default=0, nullable=False)
     cliente_id = db.Column(db.Integer, nullable=False)
     estado = db.Column(db.Boolean, nullable=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     turl_foto = db.Column(db.Text, nullable=False)
-
+    publicacion_id = db.Column(
+        db.Integer,
+        db.ForeignKey('publicacion.id', ondelete='CASCADE'),
+        nullable=False
+    )
     def to_dict(self):
         return {
             'id': self.id,
