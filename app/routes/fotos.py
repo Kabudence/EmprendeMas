@@ -280,6 +280,75 @@ def get_publicaciones_paginated():
     }), 200
 
 
+
+@foto_bp.route('/user/<int:cliente_id>/top_by_week', methods=['GET'])
+def top_photos_by_week(cliente_id: int):
+    from datetime import datetime, timedelta
+    from sqlalchemy import text
+
+    primera = (db.session.query(Foto.fecha_creacion)
+               .filter_by(cliente_id=cliente_id)
+               .order_by(Foto.fecha_creacion.asc())
+               .first())
+    if not primera:
+        return jsonify({'error': 'El usuario no tiene fotos'}), 404
+
+    inicio_total = primera[0] - timedelta(
+        days=primera[0].weekday(),
+        hours=primera[0].hour,
+        minutes=primera[0].minute,
+        seconds=primera[0].second,
+        microseconds=primera[0].microsecond
+    )
+
+    hoy = datetime.utcnow()
+    total_semanas = (hoy - inicio_total).days // 7 + 1
+    respuesta = {}
+
+    for idx in range(total_semanas):
+        ini = inicio_total + timedelta(weeks=idx)
+        fin = ini + timedelta(days=6, hours=23, minutes=59, seconds=59,
+                              microseconds=999_999)
+
+        sql = text("""
+            SELECT f.id AS foto_id,
+                   COUNT(m.Clientes_id)          AS likes,
+                   COUNT(cf.Comentarios_id)      AS total_comentarios,
+                   COALESCE(AVG(cp.calificacion), 0) AS promedio_calificacion
+            FROM foto f
+            LEFT JOIN megusta         m  ON m.Foto_id = f.id
+            LEFT JOIN comentario_foto cf ON cf.Foto_id = f.id
+            LEFT JOIN comentariospredefinidos cp ON cp.id = cf.Comentarios_id
+            WHERE f.cliente_id = :cliente_id
+              AND f.fecha_creacion BETWEEN :ini AND :fin
+            GROUP BY f.id
+            ORDER BY total_comentarios DESC
+            LIMIT 3
+        """)
+
+        filas = db.session.execute(sql, {
+            'cliente_id': cliente_id,
+            'ini': ini,
+            'fin': fin
+        })
+
+        respuesta[f"semana_{idx + 1}"] = {
+            "rango": {
+                "inicio": ini.date().isoformat(),   # p.e. 2025-02-03
+                "fin":    fin.date().isoformat()    # p.e. 2025-02-09
+            },
+            "fotos": [{
+                "foto_id":            row.foto_id,
+                "likes":              int(row.likes),
+                "total_comentarios":  int(row.total_comentarios),
+                "promedio_calificacion": float(row.promedio_calificacion)
+            } for row in filas]
+        }
+
+    return jsonify(respuesta), 200
+
+
+
 def add_header(response):
     response.headers["Connection"] = "close"
     return response
